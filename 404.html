@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>404 | Nothing to it</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/site.webmanifest">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div>
+            <main>
+                <h1>404 &ndash; Are you from the future?</h1>
+                <p>This link doesn't exist... yet. Perhaps there's a typo?</p>
+                <p style="text-align: center;"><a href="/">Let's get you home.</a></p>
+            </main>
+        </div>
+        <footer>
+            &copy; 2025 Gaelan Chen
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            &>div {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        main {
+            display: flex;
+            padding: 0 1rem 1rem 1rem;
+            flex-direction: column;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            p,
+            h1 {
+                margin-top: .75lh;
+            }
+
+            h1 {
+                font-size: x-large;
+            }
+
+            p {
+                font-size: large;
+            }
+
+            a {
+                text-decoration: underline;
+            }
+        }
+    </style>
+</html>

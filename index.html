@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Nothing to it</title>
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/site.webmanifest">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>Nothing to it</h1>
+        </header>
+        <div>
+            <main>
+                <div style="display: flex; justify-items: center; margin: 0 auto;">
+                    <svg width="2rem" fill="#CCC" viewBox="0 0 24 24">
+                        <path
+                            d="m21.301 4c.411 0 .699.313.699.663 0 .248-.145.515-.497.702-1.788.948-3.858 4.226-3.858 6.248 3.016-.092 4.326 2.582 4.326 4.258 0 2.007-1.738 4.129-4.308 4.129-3.24 0-4.83-2.547-4.83-5.307 0-5.98 6.834-10.693 8.468-10.693zm-10.833 0c.41 0 .699.313.699.663 0 .248-.145.515-.497.702-1.788.948-3.858 4.226-3.858 6.248 3.016-.092 4.326 2.582 4.326 4.258 0 2.007-1.739 4.129-4.308 4.129-3.241 0-4.83-2.547-4.83-5.307 0-5.98 6.833-10.693 8.468-10.693z" />
+                    </svg>
+
+                    <div style="display: flex; flex-direction: column; width: 16rem;">
+                        <i>There's nothing to it but to do it.</i>
+                        <div style="align-self: end;">&mdash; Proverb</div>
+                    </div>
+
+                    <svg width="2rem" fill="#CCC" viewBox="0 0 24 24">
+                        <path
+                            d="m2.699 20c-.411 0-.699-.312-.699-.662 0-.249.145-.516.497-.703 1.788-.947 3.858-4.226 3.858-6.248-3.016.092-4.326-2.582-4.326-4.258 0-2.006 1.738-4.129 4.308-4.129 3.241 0 4.83 2.547 4.83 5.307 0 5.981-6.834 10.693-8.468 10.693zm10.833 0c-.41 0-.699-.312-.699-.662 0-.249.145-.516.497-.703 1.788-.947 3.858-4.226 3.858-6.248-3.015.092-4.326-2.582-4.326-4.258 0-2.006 1.739-4.129 4.308-4.129 3.241 0 4.83 2.547 4.83 5.307 0 5.981-6.833 10.693-8.468 10.693z" />
+                    </svg>
+                </div>
+                <h2>Posts</h2>
+                <div class="post">
+                    <a href="/posts/introducing-ribbon" class="title">Introducing Ribbon, a new programming
+                        language!</a>
+                    <div class="date">2025-02-14</div>
+                </div>
+            </main>
+        </div>
+        <footer>
+            &copy; 2025 Gaelan Chen
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            &>div {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        main {
+            display: flex;
+            padding: 1rem;
+            flex-direction: column;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+            gap: .5rem;
+
+            flex: 1;
+
+            .post {
+                display: flex;
+                flex-direction: row-reverse;
+                align-items: baseline;
+                justify-content: start;
+                width: fit-content;
+
+                gap: .5rem;
+                max-height: 2lh;
+                overflow: hidden;
+
+                mask-image: linear-gradient(black 1lh, transparent);
+
+                .title {
+                    flex: 1;
+                }
+
+                .date {
+                    color: #AAA;
+                    font-size: small;
+                }
+            }
+        }
+    </style>
+</html>

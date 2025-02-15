@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Introducing Ribbon | Nothing to it</title>
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/site.webmanifest">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div>
+            <main>
+                <h1>Introducing Ribbon, a new programming language!</h1>
+                <div class="date">February 14, 2025</div>
+
+                <p>Hello world!</p>
+                <p>My name is Gaelan, I'm a software engineer who's had his fair share of work experiences, hobby
+                    projects, interests, and ambitions. I've always imagined having a blog, so here we are! There's
+                    nothing to it but to do it!</p>
+                <p>I wanted to share with you a project that I have been brainstorming and working on for many
+                    years: Ribbon! It's a new programming language, one designed to be very easy to prototype in, like
+                    Python, but also provide robust mechanisms to support strong runtime guarantees, like Rust.</p>
+                <p>Ribbon is still in alpha, though I'm preparing for a beta release soon. Perhaps the quickest way for
+                    me to introduce it to you is with code samples. I've created three that hopefully show you what
+                    Ribbon is capable of.</p>
+                <h2>Sample 1: For the data scientists</h2>
+                <pre><div>let halve(x) = x / 2
+
+let halve_plus_one = halve + 1
+
+let y = halve_plus_one( [1, 2, null, 4] )
+
+let squared_y = y ^ 2
+
+print(squared_y) // [2.25, 4, null, 9]
+
+print(squared_y[# - 1]) // 9
+</div></pre>
+                <p>As you can see, it is extremely flexible! I know you must have questions, so here's some
+                    technical details.</p>
+                <ol>
+                    <li>Ribbon is designed to be statically typed, though it does support dynamic types to accommodate
+                        the prototyping process. For example, in this case, <code>halve</code> has the inferred type
+                        <code>&lt;T: Numeric&gt; (x: T) -> T</code>. Yes, it is templated, but unlike C++, Ribbon
+                        supports calling templated functions when the type is only known at runtime. I'll discuss this
+                        process more in my next post.
+                    </li>
+                    <li>Integers are a separate type from other numerics, such as rationals and reals, but they can all
+                        be implicitly converted between each other if the conversion is sound.</li>
+                    <li>Like Python, the integer type <code>Int</code> has infinite precision. There is also a rational
+                        type which also has infinite precision. However, there are also fixed-size variants, such as
+                        <code>Int&lt;32&gt;</code>. You'll see this in the next sample.
+                    </li>
+                    <li><code>halve_plus_one</code> is identical to the lambda <code>(x) =&gt; halve(x) + 1</code>.
+                        Pretty nifty, right? I'll discuss how it works in a future post.
+                    </li>
+                    <li>Any operations or functions applied to lists (or iterables in general) are applied element-wise.
+                        There is no ambiguity because operators only operate on lists or on non-lists, never both. For
+                        example, the sum operator <code>+</code> does not operate on lists, whereas the concatenation
+                        operator <code>++</code> only operates on lists. I'm glossing over some technical details that
+                        I'll discuss in another post sometime.
+                    </li>
+                    <li>The <code>null</code> value is encapsulated by fallible types, denoted <code>T?</code> for some
+                        type <code>T</code>. Be rest assured, <code>null</code> is never a legal value in a non-fallible
+                        setting. I'll describe <code>null</code>, fallibility, and error-handling in general in a future
+                        post.</li>
+                    <li>Yes, exponentiation is done with the <code>^</code> operator, you're welcome. The operator for
+                        bitwise XOR (and bitwise NOT) is <code>~</code>. They're not ambiguous because one is unary
+                        and the other is binary. You should know that this idea is not mine, but Dennis Ritchie's,
+                        though I cannot find the source I originally heard this from.</li>
+                    <li>The <code># - 1</code> in the index means what you think it means. The <code>#</code> operator
+                        refers to the length of the list, and subtracting one gives us the index of the last item. It is
+                        identical to <code>squared_y[#squared_y - 1]</code>, where the unary <code>#</code> operator
+                        returns the length of the list, just like Lua.</li>
+                </ol>
+                <p>Do you like it? I hope you don't think of Ribbon as simply a revamped Python. There's a lot more work
+                    I've done to make it useful for other tasks, such as...</p>
+                <h2>Sample 2: For the systems programmers</h2>
+                <pre><div>let XState : @Binary = (
+    state: Int&lt;10&gt;
+    flags: Bin&lt;6&gt;
+)
+
+let state = 0x208 + 42
+let flags: Bin&lt;6&gt; = 0b11 ++ 0x6
+// Like Rust, type hints (e.g. `Bin&lt;6&gt;`) are optional
+
+let x = XState(state, flags)
+
+let x_bin = Bin&lt;16&gt;(x)
+</div></pre>
+                <p>Some more details:</p>
+                <ol>
+                    <li>The <code>@Binary</code> directive tells Ribbon to pack the struct fields in the order presented
+                        (in little endian). In general, structs do not promise an exact layout unless a directive
+                        requires
+                        it.</li>
+                    <li>Struct fields, and all other multi-line collections, do not need commas at the end of each line.
+                        They are inferred by newlines and indentation. I might make a post just about this feature;
+                        there's some interesting details.</li>
+                    <li>The binary type <code>Bin</code> is distinct from the integer type <code>Int</code>. Notably:
+                        <ul>
+                            <li><code>Bin</code> supports addition and other non-bitwise numeric operations through an
+                                implicit conversion into an <code>Int</code>. The conversion
+                                back from <code>Int</code> to <code>Bin</code> must be explicit.
+                            </li>
+                            <li>Unlike <code>Bin</code>, <code>Int</code> does not natively have bitwise operations nor
+                                concatenation (<code>++</code>).</li>
+                            <li>Binary literals have an inferred type. For example, <code>0o000</code> (octal) has the
+                                type <code>Bin&lt;9&gt;</code>. As a fun fact, integer literals (e.g. <code>42</code>)
+                                actually have a type of <code>Bin</code> (a binary number with arbitrarily many bits).
+                                They can of course be implicitly converted to an <code>Int</code>.</li>
+                        </ul>
+                    </li>
+                    <li>Structs that have the <code>@Binary</code> directive can be converted into <code>Bin</code> and
+                        vice versa.</li>
+                    <li>Sharp observers will notice that <code>++</code> operates on <code>Bin</code>, which implies
+                        that <code>Bin</code> is actually a list type! It is equivalent to an array of Booleans. For
+                        example, <code>0xC4[2]</code> equals <code>true</code>.</li>
+                </ol>
+                <p>I have one more sample that explores some of the more technical ideas I have for Ribbon.</p>
+                <h2>Sample 3: For the software engineers</h2>
+                <pre><div>let apply(
+    document: &Document
+    action: Action
+    history: &amp;List&lt;Action&gt;
+    log: &amp;List&lt;Issue&gt;
+) -&gt; (
+    size_change_kiB: Int
+    new_issues: List&lt;Issue&gt;
+) = {
+    let (size_change, issues) = action.apply_to(&document)
+
+    &amp;history.push(action)
+    &amp;log.append(issues)
+
+    (size_change, new_issues: issues)
+}
+
+let undo_last_action(
+    document: &Document
+    history: &amp;List&lt;Action&gt; and #_ &gt; 0
+    log: &amp;List&lt;Issue&gt;
+) -&gt; Action = {
+    let last_action = &amp;history.pop()
+
+    last_action.undo_to(&document)
+
+    &amp;log.push(Issue.new("Undid action \(last_action)"))
+
+    last_action
+}
+
+var (document, history, log) = load_document_history_and_logs()
+
+let kiB = &amp;document.apply(format_text, &amp;history, &amp;log).size_change
+
+&document.undo_last_action(&amp;history, &amp;log)
+
+print("Formatting will change the file size by \(kiB * 1024) bytes")
+</div></pre>
+                <p>There's a lot here to unpack, so once more, I will try to answer as many questions as possible.</p>
+                <ol>
+                    <li>The <code>&amp;</code> here is equivalent to Rust's <code>&amp;mut</code>.</li>
+                    <li>The return type of <code>apply</code> is indeed an inline struct declaration! You're welcome.
+                    </li>
+                    <li>Structs and tuples have been merged into tuples in Ribbon. I'll have to write about this too in
+                        another
+                        post.</li>
+                    <li>If an argument is passed to a mutable parameter, even if it is used as <code>self</code>, it
+                        must have the <code>&amp;</code> in front of it. This is to make all mutability apparent <em>in
+                            the syntax</em>. There's another advantage that I'll discuss in a future post.</li>
+                    <li>Similar to the D language, notation like <code>a.b(c)</code> is shorthand for
+                        <code>b(a, c)</code>.
+                    </li>
+                    <li>Similar to Rust, the final expression in a function body (or any block in general) is
+                        its return value. The <code>return</code> keyword is optional.
+                    </li>
+                    <li>The parameter constraint <code>&amp;List&lt;Action&gt; and #_ &gt; 0</code> has the meaning:<ul>
+                            <li>A mutable reference to a <code>List&lt;Action&gt;</code></li>
+                            <li>With the precondition: <code>#_ &gt; 0</code>, i.e. its length must be positive. This
+                                expression is a lambda, identical to <code>(x) =&gt; #x &gt; 0</code>. This is because
+                                <code>_</code> is the identity function, and operations can be applied to lambdas as
+                                shown earlier.
+                            </li>
+                        </ul>
+                    </li>
+                </ol>
+                <p>Yes, you see it right, Ribbon supports arbitrary preconditions for parameters and other declarations!
+                    For the time being, these are evaluated at runtime. But my plan (and it's a long plan) is that
+                    Ribbon will incorporate formal verification, similar to Ada, allowing for compile-time checks and
+                    optimization opportunities. Once again, I'll have to discuss it more in a future post.</p>
+                <h2>Summary</h2>
+                <p>I hope you're as excited about Ribbon as I am! There's more things I didn't have time to include
+                    here, like iterables and generators, fallibility, objects and traits (and inheritance), modules and
+                    dependencies, and much more. But I will mention that my goal for Ribbon is to be easier to prototype
+                    in
+                    than Python, while having stronger runtime guarantees than Rust. Do you think I'm on the right
+                    track?</p>
+                <p>As for my current progress, some the features I've shown here are already implemented in my
+                    interpreter written in Rust. This project of course is still in its alpha stage as I still have many
+                    bugs and holes in my implementation. I plan on releasing and open-sourcing it in the coming weeks,
+                    plus I'll continue posting more blog posts here each Friday.</p>
+                <p>Until then, take care! I'll see you next week when I'll discuss how Ribbon is both an interpreted
+                    and compiled language!</p>
+                <br>
+                <p>P.S. It seems a language becomes real when it has a logo, so I made this one today. Enjoy!</p>
+                <img src="./ribbon-logo.png" alt="Logo for the Ribbon language"
+                    style="display: block; max-width: 16rem; margin: .5rem auto; border-radius: 1rem;">
+            </main>
+        </div>
+        <footer>
+            &copy; 2025 Gaelan Chen
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            &>div {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>div {
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image: linear-gradient(270deg, transparent, black 1rem);
+                }
+
+            }
+
+            code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+            }
+
+            code,
+            pre {
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>
