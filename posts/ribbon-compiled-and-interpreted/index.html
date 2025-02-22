@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Compiled vs. interpreted | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div class="main">
+            <main>
+                <h1>Compiled vs. interpreted languages</h1>
+                <div class="date">February 21, 2025</div>
+
+                <p>The traditional distinction between compiled and interpreted languages used to be quite clear:
+                    compiled languages like Fortran and COBOL must translate their source code into machine code before
+                    they are executed on a processor, while interpreted languages like Lisp and BASIC execute their
+                    source code immediately. However, this line has blurred as interpreted languages like Python and
+                    Ruby came out which use bytecode internally, alongside compiled languages like Java and C# which
+                    also compile to and execute from their own bytecode.</p>
+                <p>In this fashion, modern interpreters do &quot;compile&quot; their source code, and many modern
+                    compilers are tightly developed with an interpreter, such as Java's JVM, or C#'s CLR.</p>
+                <p>However, there is still a very clear distinction between a language &quot;feeling&quot; like it's
+                    compiled or interpreted. The way I see it:</p>
+                <ul>
+                    <li>Compiled languages catch type and semantic errors at compile time, preventing execution until
+                        they are resolved.</li>
+                    <li>Interpreted languages defer most if not all checks to runtime, meaning the program may execute
+                        partially before encountering an issue which stops the program.</li>
+                </ul>
+                <p>Then you're probably wondering: When does Ribbon check errors? Interestingly, I've designed it to
+                    catch errors both at compile time and at runtime. I really mean it. A compile-time error is also
+                    shown at runtime, and similarly a runtime error is shown at compile-time (pending some formal
+                    verification). Even beyond that, runtime errors do not terminate the program if they don't have to.
+                    Here's an example using actual outputs from my current interpreter:</p>
+                <pre><div>let x = 34
+
+let y = x + z
+
+print(x)
+
+y
+</div></pre>
+                <pre><div>Executing program...
+Warning: Undeclared identifier `z`
+    3 | let y = x + z
+      |             ^
+
+(34)
+Returned value:
+Error: Undeclared identifier `z`
+    3 | let y = x + z
+      |             ^
+</div></pre>
+                <p>Once Ribbon has a static analysis phase, the warning here will appear before execution starts, but it
+                    will not prevent execution. The error you see there really is the value of <code>y</code> (the final
+                    expression in a program is its return value). Evaluating <code>y</code>'s declaration didn't even
+                    prevent the next statement <code>print(x)</code> from running! Isn't that incredible?</p>
+                <h2>Fallibility and error handling</h2>
+                <p>Ribbon has a <code>null</code> literal which belongs to the type <code>Null</code>, a subtype of
+                    <code>Error</code>. Indeed, this makes <code>null</code> the easiest error to construct. Errors in
+                    Ribbon behave similarly to NaNs in floating-point arithmetic: they are contagious. If an operation
+                    involves an error, its result propagates that error.
+                </p>
+                <p>Bonus fact: Ribbon does not allow NaN as a valid value of floating-point numbers—it is instead an
+                    instance of <code>Error</code>. If you did want a type representing floating point numbers and NaN,
+                    you can use <code>Float?</code>. The question mark denotes fallibility, which acts a lot like an
+                    optional. It either has a non-null value or it has an error value which always compares equal to
+                    <code>null</code>. (Finally, no need to worry about floats only partially implementing comparison
+                    operators! I'm sure Rust programmers will appreciate that!)
+                </p>
+                <p>I have a pretty insightful example that I think motivates how I view error handling in Ribbon.</p>
+                <pre><div>let divide(a: Real, b: Real) -&gt; Real = {
+    a / b
+}
+</div></pre>
+                <p>In this sample, <code>divide</code> is a fallible function. If <code>b</code> is zero, then
+                    <code>a / b</code> is undefined, and the return value will not be a member of <code>Real</code>. The
+                    idea is that this would be detected during static analysis, and consequently any usage of
+                    <code>divide</code> in other code would be fallible (i.e. the result of <code>divide</code> could be
+                    an error value, as if the return type was <code>Real?</code>). At the very least, the declaration of
+                    the <code>divide</code> function yields a warning: &quot;<code>divide</code> is a fallible function
+                    because it is undefined for <code>b = 0</code>&quot;. We can suppress this warning simply by making
+                    the return type be <code>Real?</code> to explicitly state the function is fallible.
+                </p>
+                <p>However, this is not the best solution. Ribbon supports preconditions, so we can actually express
+                    division this way:</p>
+                <pre><div>let divide(a: Real, b: Real and b != 0) -&gt; Real = {
+    a / b
+}</div></pre>
+                <p>The parameter <code>b</code> now has a precondition that it is not 0. Thus, the division
+                    <code>a / b</code> is always defined. It is now up to the caller to enforce the precondition. If the
+                    caller can prove <code>b</code> is always non-zero, then from the caller's perspective,
+                    <code>divide</code> is infallible. But if the caller cannot prove <code>b</code> is always non-zero,
+                    then from their perspective, <code>divide</code> actually has the function type
+                    <code>(Real, Real) -&gt; Real?</code>.
+                </p>
+                <p>I also want to mention that fallible types can also be expressed as <code>T | E</code>, for any type
+                    <code>T</code> and any error type <code>E</code>, if for any reason you want the error type to be
+                    explicit. You can even chain it: <code>T | E1 | E2 | ...</code>. This is one of the ways to safely
+                    handle fallible types and make the code as a whole infallible.
+                </p>
+                <p>There's a few big takeaways from designing Ribbon this way that are worth emphasizing.</p>
+                <ol>
+                    <li>Errors in Ribbon are preferably not handled or &quot;caught&quot;. If an error could be avoided,
+                        it should be because there is a precondition that could have been enforced which avoids the
+                        error, just like in the <code>divide</code> example above.</li>
+                    <li>If you do really need to handle &quot;errors&quot; (i.e. HTTP 404 and the like), you should
+                        first consider using enums. Enums are very handy and easy to use in Ribbon. For example,
+                        programmers can easily assume an enum only yields one or a few variants, and not handle the
+                        rest. Only in those unhandled cases can an error be created. Basically, it is at the point of
+                        usage where a programmer can choose how much they want to handle and if they are willing to
+                        create fallible code or not.</li>
+                    <li>If you <em>really</em> do need to handle and unwrap actual <code>Error</code> objects, there are
+                        concessions in Ribbon to allow it, but it's a last resort. I'll have to describe this later at
+                        some point, perhaps in actual documentation.</li>
+                    <li>Since errors are valid values at runtime, they do not block the program from ever compiling or
+                        running. But they do make the program as a whole fallible, and fallible programs are not easily
+                        shared as libraries. I'm thinking that users who use a &quot;fallible&quot; library must
+                        acknowledge it, and their own project becomes fallible as a result unless all inherited errors
+                        are handled.</li>
+                </ol>
+                <p>I also have some ambitious goals for Ribbon with respect to formal verification. For example, I would
+                    love if Ribbon could enforce memory usage. I dream of static analysis within the compiler proving
+                    that a Ribbon program can be guaranteed to never use more than a given amount of memory (for both
+                    the stack and heap individually) for a given platform. This would be amazing for usage in embedded
+                    systems and the like.</p>
+                <h2>Summary</h2>
+                <p>In the traditional sense, Ribbon is currently just interpreted for now, but the language is designed
+                    to be compiled to CPUs or even GPUs. I am designing it to be suitable for usage as a systems
+                    programming language after all. I just haven't gotten there yet with development.</p>
+                <p>Since Ribbon is designed to detect and catch errors at compile-time and at runtime, I think it is
+                    fair to say Ribbon is both a compiled and interpreted language, or at least it certainly feels like
+                    it is. These error semantics are very versatile, making prototyping incredibly easy, while also
+                    giving Ribbon stringent and robust mechanisms to enforce program correctness. When a project grows
+                    past its prototyping phase and wants more reliability, preconditions can be added incrementally to
+                    reduce the amount of fallible code over time.</p>
+                <p>I hope you find these ideas fascinating! I'll see you next week where I'll talk about tuples,
+                    structs, and enums in Ribbon. Until then, take care!</p>
+            </main>
+        </div>
+        <footer>
+            <a href="mailto:contact@nothingtoit.net">contact@nothingtoit.net</a>
+            <div>&copy; 2025 Gaelan Chen</div>
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            .main {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            display: flex;
+            justify-content: center;
+
+            gap: 4rem;
+            padding: 1rem;
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>div {
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image: linear-gradient(270deg, transparent, black 1rem);
+                }
+
+            }
+
+            code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+            }
+
+            code,
+            pre {
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>

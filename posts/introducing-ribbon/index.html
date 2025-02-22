@@ -2,14 +2,15 @@
 <html lang="en">
     <head>
         <title>Introducing Ribbon | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
         <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
         <link rel="shortcut icon" href="/favicon.ico">
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
         <meta name="apple-mobile-web-app-title" content="Nothing to it">
-        <link rel="manifest" href="/site.webmanifest">
+        <link rel="manifest" href="/manifest.json">
         <link rel="canonical" href="https://nothingtoit.net">
     </head>
     <body>
@@ -20,7 +21,7 @@
                 </a>
             </h1>
         </header>
-        <div>
+        <div class="main">
             <main>
                 <h1>Introducing Ribbon, a new programming language!</h1>
                 <div class="date">February 14, 2025</div>
@@ -222,7 +223,8 @@ print("Formatting will change the file size by \(kiB * 1024) bytes")
             </main>
         </div>
         <footer>
-            &copy; 2025 Gaelan Chen
+            <a href="mailto:contact@nothingtoit.net">contact@nothingtoit.net</a>
+            <div>&copy; 2025 Gaelan Chen</div>
         </footer>
     </body>
     <style>
@@ -252,7 +254,7 @@ print("Formatting will change the file size by \(kiB * 1024) bytes")
             color: #222;
             background: #222;
 
-            &>div {
+            .main {
                 background: #EEE;
                 flex: 1;
             }
@@ -272,8 +274,11 @@ print("Formatting will change the file size by \(kiB * 1024) bytes")
         }
 
         footer {
+            display: flex;
+            justify-content: center;
+
+            gap: 4rem;
             padding: 1rem;
-            text-align: center;
         }
 
         main {

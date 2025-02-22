@@ -1,0 +1,25 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Nothing to it</title>
+        <link>https://nothingtoit.net</link>
+        <description>Posts from the blog Nothing to it</description>
+        <language>en</language>
+        <pubDate>Fri, 21 Feb 2025 23:30:00 -0800</pubDate>
+        <lastBuildDate>Fri, 21 Feb 2025 23:30:00 -0800</lastBuildDate>
+        <atom:link href="https://nothingtoit.net/rss.xml" rel="self" type="application/rss+xml" />
+        <item>
+            <title>Introducing Ribbon, a new programming language!</title>
+            <link>https://nothingtoit.net/posts/introducing-ribbon/</link>
+            <description>Ribbon, a new programming language! Still in alpha! I provide 3 code samples to demonstrate my plans for it.</description>
+            <pubDate>Fri, 14 Feb 2025 23:00:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/introducing-ribbon/</guid>
+        </item>
+        <item>
+            <title>Compiled vs. interpreted languages</title>
+            <link>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</link>
+            <description>I show how Ribbon handles errors at compile time and runtime.</description>
+            <pubDate>Fri, 21 Feb 2025 23:30:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</guid>
+        </item>
+    </channel>
+</rss>
