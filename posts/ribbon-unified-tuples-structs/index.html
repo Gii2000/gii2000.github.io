@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Compiled vs. interpreted | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div class="main">
+            <main>
+                <h1>Unified tuples and structs in Ribbon: A brainstorming journey</h1>
+                <div class="date">February 28, 2025</div>
+
+                <p>Welcome back! This entry is a little different than my previous ones. I'll be describing some of my
+                    brainstorming that lead to just one of Ribbon's features: the unification of tuples and structs.
+                    This will be pretty thorough, but I hope you'll enjoy the journey just as much as the destination.
+                </p>
+                <h2>Motivation</h2>
+                <p>When I declare structs in Rust, I have a habit of starting with tuples, and later refactoring my code
+                    to use structs. It feels quite natural to me, especially when I write enum variants with only one
+                    associated value. Refactoring these tuples into structs required changing parentheses into curly
+                    braces, and I've always found this to be a little annoying.</p>
+                <p>In an early version of Ribbon, I was brainstorming tuples and structs. I thought about how if structs
+                    used parentheses, this refactoring would be a lot smoother. I also thought about how a struct literal
+                    instantiation would look. For reference, Rust's syntax uses curly braces for struct literals, such
+                    as <code>Struct { field1: value1, field2: value2 }</code>. However, these initializer
+                    literals are just like function calls. In fact, the entire parameter tuple of a function is nothing more than a struct!
+                </p>
+                <p>Separately, I was trying to design destructuring in Ribbon. Pattern matching and unwrapping objects
+                    is very handy, and just like Rust and many other languages, Ribbon would fully support it. My first
+                    implementation had an interesting quirk: Type hints were allowed in fields for tuples, as well as
+                    for the whole tuple. So, for example, all three lines here were equivalent:</p>
+                <pre><code class="language-ribbon">let (x, y) = (32, &quot;Hello&quot;)
+
+let (x: Int, y: String) = (32, &quot;Hello&quot;)
+
+let (x, y): (Int, String) = (32, &quot;Hello&quot;)
+</code></pre>
+                <p>I actually quite liked the second form, as it reminded me of declaring a parameter tuple for a
+                    function. I've studied quite a lot of programming languages, and it's quite a rare syntax; I can
+                    only think of Scala which has syntax like it. Some languages to allow similar syntax for pattern
+                    matching or function calls, but not for general destructuring. And then it all clicked.</p>
+                <h2>Function calls use destructuring!</h2>
+                <p>This alone really helped me resolve a lot of design decisions. I have since refined and collated
+                    everything together. I'm very pleased to be able present it to you!</p>
+                <p>We'll begin with a simple function.</p>
+                <pre><code class="language-ribbon">let f(x: Int, y: String) = {
+    print(&quot;x: \(x), y: \(y)&quot;)
+}
+
+f(32, &quot;Hello&quot;)
+</code></pre>
+                <p>We can rewrite this function call into an equivalent Ribbon program:</p>
+                <pre><code class="language-ribbon">{
+    let (x: Int, y: String) = (32, &quot;Hello&quot;)
+
+    print(&quot;x: \(x), y: \(y)&quot;)
+}
+</code></pre>
+                <p>This means that the mechanism for mapping function arguments to parameters is the same mechanism for
+                    tuple destructuring! Realizations that simplify and consolidate logic like this are always so
+                    satisfying to find! But it gets better.</p>
+                <p>If we take inspiration from languages which allow named function arguments, we realize that there is
+                    precedence for structs to use parentheses, just like I dreamed of! Most languages use the assignment
+                    operator (<code>=</code>) for this purpose, but I found the colon (<code>:</code>) to work just as
+                    well.</p>
+                <pre><code class="language-ribbon">let f(x: Int, y: String) = { ... }
+
+f(x: 32, y: &quot;Hello&quot;)
+</code></pre>
+                <p>This implies a destructuring syntax of:</p>
+                <pre><code class="language-ribbon">let (x: Int, y: String) = (x: 32, y: &quot;Hello&quot;)
+</code></pre>
+                <p>Now, there's just one problem, and some of you might see it already. Pretty much all languages that
+                    perform struct destructuring have syntax similar to the above, except the identifiers
+                    <code>Int</code> and <code>String</code> would actually be the <em>new names</em> for the fields.
+                    For example, Swift does actually support similar syntax to the above:
+                </p>
+                <pre><code class="language-swift">let (x: a, y: b) = (x: 32, y: &quot;Hello&quot;)
+</code></pre>
+                <p>This declaration creates two new variables, <code>a</code> and <code>b</code>, that are simply
+                    renamed from the <code>x</code> and <code>y</code> fields respectively. There's no way to insert
+                    type hints&mdash;they must be listed after, such as <code>(x: a, y: b): (x: Int, y: String)</code>.</p>
+                <p>This stumped me for a little while. There's an ambiguity of using <code>:</code> to separate a
+                    variable and its type, versus using <code>:</code> to separate a field identifier and its value. Did
+                    I need to introduce a new operator? Did I need to resort to restricting types to have capitalized
+                    names and values to use lowercase ones?</p>
+                <p>Eventually, upon thinking of how function calls act just like destructuring, I realized I know of a
+                    language that supported renaming within function calls: Swift again!</p>
+                <p>For those unaware, Swift has <em>two identifiers</em> for every function parameter. One that is seen
+                    externally by callers as an argument name, and one that is used internally within the body as a
+                    parameter name. It's actually really clever. Here's an example:</p>
+                <pre><code class="language-swift">func send_greeting(to recipient: Person) {
+    recipient.send_message(&quot;Hello!&quot;)
+}
+
+send_greeting(to: bob)
+</code></pre>
+                <p>This inspires us to consider struct destructuring with renaming to look like this:</p>
+                <pre><code>let (x a: Int, y b: String) = (x: 32, y: &quot;Hello&quot;) // This declares `a` and `b`!
+</code></pre>
+                <p>I don't actually like the space separating <code>x</code> and <code>a</code>, so I did one final
+                    tweak. I added a rename operator: <code>\</code>. (I think a slash is used in some type theory
+                    notations for identifier substitution, and the numerator side is usually the target name, so it's
+                    perfect!)</p>
+                <pre><code class="language-ribbon">let (x\a: Int, y\b: String) = (x: 32, y: &quot;Hello&quot;)
+</code></pre>
+                <p>To recap, that means <strong>Ribbon unifies structs, tuples, and function parameters</strong>.</p>
+                <p>I'll make this concrete with a few samples to show how flexible this really is. Note that all of the
+                    following assignment targets are structs!</p>
+                <pre><code class="language-ribbon">// Tuple literals implictly cast to structs!
+let (x: Int, y: Int) = (x: 3, y: 4)
+let (x: Int, y: Int) = (3, 4) // Implicit casting to the above
+
+// Structs support reordering
+let (x: Int, y: Int) = (y: 4, x: 3)
+
+// Type hints can also be specified after the struct
+let (x, y): (x: Int, y: Int) = (3, 4)
+let (x, y): (   Int,    Int) = (3, 4) // Equivalent to the above
+
+// ... or omitted entirely to be completely inferred!
+let (x, y) = (3, 4)
+
+// Of course, we can also use previously declared struct or tuple types
+let (x, y): T =  (3, 4)
+let (x, y)    = T(3, 4) // This uses T's constructor
+
+
+// Plus we have renaming for all the the above!
+let (x\a: Int, y\b: Int) = (x: 3, y: 4)
+
+let (x\a, y\b): (x: Int, y: Int) = (x: 3, y: 4)
+
+let (x\a, y\b): T =  (x: 3, y: 4)
+let (x\a, y\b)    = T(x: 3, y: 4)
+
+let (x\a, y\b) = (x: 3, y: 4)
+</code></pre>
+                <p>I currently only allow tuple literals to implicitly cast into structs, i.e. an unnamed field from a
+                    tuple literal into a named field of a struct. The reverse hasn't been implemented yet, though I am
+                    still brainstorming it.</p>
+                <h2>Afterword</h2>
+                <p>Last week, I said I'd be showcase enums today as well. I'm sorry, you'll have to wait later for that.
+                    I didn't realize I had so much to say about structs and tuples. I didn't even explain how structs
+                    and tuples are actually completely unified in Ribbon. Traditionally, a <em>struct</em> has all of
+                    its fields labeled, whereas a <em>tuple</em> has all of its fields unlabeled. Ribbon supports both,
+                    as well as the in-between where some fields are labeled and some aren't, all in the same
+                    representation. It acts similar to Python which supports labeled and unlabeled function arguments.
+                    I'll have to describe its implementation more thoroughly sometime, or perhaps I'll save it for when
+                    I get around to writing proper documentation.</p>
+                <p>I also didn't mention how structs and tuples support optional fields! It corresponds exactly to
+                    function definitions with optional parameters! I'll have to write a blog post just for functions
+                    later, but here's a teaser. (Note, <code>null</code> is an error value, so a field accepting
+                    <code>null</code> necessarily tolerates errors. There will probably be caveats as this is still
+                    actively being explored and worked on.)
+                </p>
+                <pre><code class="language-ribbon">let f(
+    a: Int      // Required, so omitting it or providing `null` is not valid
+    b: Int ?= 2 // Omitting or providing `null` for this field defaults to 2
+    c: Int?     // Omitting this field defaults to `null`
+    d ?= 2      // Just like `b`, though its type is inferred by usage
+    e?          // Just like `c`, though its non-error type is also inferred
+) = { ... }
+</code></pre>
+                <p>Anyways, I hope you enjoyed seeing my brainstorming process! I had a lot of fun writing this blog
+                    post, so next week I'll try doing something similar for variables, references, and what I'm calling
+                    scaffolding. Until then, take care!</p>
+            </main>
+        </div>
+        <footer>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
+            <div>&copy; 2025 Gaelan Chen</div>
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            .main {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            gap: 2rem;
+            padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>code {
+                    display: block;
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image: linear-gradient(270deg, transparent, black 1rem);
+                }
+            }
+
+            p>code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+            }
+
+            code {
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>

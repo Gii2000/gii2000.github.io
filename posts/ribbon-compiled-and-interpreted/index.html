@@ -47,15 +47,15 @@
                     shown at runtime, and similarly a runtime error is shown at compile-time (pending some formal
                     verification). Even beyond that, runtime errors do not terminate the program if they don't have to.
                     Here's an example using actual outputs from my current interpreter:</p>
-                <pre><div>let x = 34
+                <pre><code>let x = 34
 
 let y = x + z
 
 print(x)
 
 y
-</div></pre>
-                <pre><div>Executing program...
+</code></pre>
+                <pre><code>Executing program...
 Warning: Undeclared identifier `z`
     3 | let y = x + z
       |             ^
@@ -65,7 +65,7 @@ Returned value:
 Error: Undeclared identifier `z`
     3 | let y = x + z
       |             ^
-</div></pre>
+</code></pre>
                 <p>Once Ribbon has a static analysis phase, the warning here will appear before execution starts, but it
                     will not prevent execution. The error you see there really is the value of <code>y</code> (the final
                     expression in a program is its return value). Evaluating <code>y</code>'s declaration didn't even
@@ -84,10 +84,10 @@ Error: Undeclared identifier `z`
                     operators! I'm sure Rust programmers will appreciate that!)
                 </p>
                 <p>I have a pretty insightful example that I think motivates how I view error handling in Ribbon.</p>
-                <pre><div>let divide(a: Real, b: Real) -&gt; Real = {
+                <pre><code>let divide(a: Real, b: Real) -&gt; Real = {
     a / b
 }
-</div></pre>
+</code></pre>
                 <p>In this sample, <code>divide</code> is a fallible function. If <code>b</code> is zero, then
                     <code>a / b</code> is undefined, and the return value will not be a member of <code>Real</code>. The
                     idea is that this would be detected during static analysis, and consequently any usage of
@@ -99,9 +99,9 @@ Error: Undeclared identifier `z`
                 </p>
                 <p>However, this is not the best solution. Ribbon supports preconditions, so we can actually express
                     division this way:</p>
-                <pre><div>let divide(a: Real, b: Real and b != 0) -&gt; Real = {
+                <pre><code>let divide(a: Real, b: Real and b != 0) -&gt; Real = {
     a / b
-}</div></pre>
+}</code></pre>
                 <p>The parameter <code>b</code> now has a precondition that it is not 0. Thus, the division
                     <code>a / b</code> is always defined. It is now up to the caller to enforce the precondition. If the
                     caller can prove <code>b</code> is always non-zero, then from the caller's perspective,
@@ -154,7 +154,22 @@ Error: Undeclared identifier `z`
             </main>
         </div>
         <footer>
-            <a href="mailto:contact@nothingtoit.net">contact@nothingtoit.net</a>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
             <div>&copy; 2025 Gaelan Chen</div>
         </footer>
     </body>
@@ -207,9 +222,16 @@ Error: Undeclared identifier `z`
         footer {
             display: flex;
             justify-content: center;
+            align-items: center;
 
-            gap: 4rem;
+            gap: 2rem;
             padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
         }
 
         main {
@@ -230,7 +252,8 @@ Error: Undeclared identifier `z`
                 border-radius: .5rem;
                 background: #DDD;
 
-                &>div {
+                &>code {
+                    display: block;
                     padding: 1rem;
 
                     white-space: pre;
@@ -241,7 +264,7 @@ Error: Undeclared identifier `z`
 
             }
 
-            code {
+            p>code {
                 padding: 0 .125rem;
                 border-radius: .25rem;
                 background: #DDD;
@@ -249,8 +272,7 @@ Error: Undeclared identifier `z`
                 white-space: pre;
             }
 
-            code,
-            pre {
+            code {
                 font-family: Hack;
             }
 

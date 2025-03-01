@@ -27,7 +27,22 @@
             </main>
         </div>
         <footer>
-            <a href="mailto:contact@nothingtoit.net">contact@nothingtoit.net</a>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
             <div>&copy; 2025 Gaelan Chen</div>
         </footer>
     </body>
@@ -84,9 +99,16 @@
         footer {
             display: flex;
             justify-content: center;
+            align-items: center;
 
-            gap: 4rem;
+            gap: 2rem;
             padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
         }
 
         main {

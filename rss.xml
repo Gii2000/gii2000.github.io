@@ -2,10 +2,10 @@
     <channel>
         <title>Nothing to it</title>
         <link>https://nothingtoit.net</link>
-        <description>Posts from the blog Nothing to it</description>
+        <description>Posts from Nothing to it</description>
         <language>en</language>
-        <pubDate>Fri, 21 Feb 2025 23:30:00 -0800</pubDate>
-        <lastBuildDate>Fri, 21 Feb 2025 23:30:00 -0800</lastBuildDate>
+        <pubDate>Fri, 28 Feb 2025 22:30:00 -0800</pubDate>
+        <lastBuildDate>Fri, 28 Feb 2025 22:30:00 -0800</lastBuildDate>
         <atom:link href="https://nothingtoit.net/rss.xml" rel="self" type="application/rss+xml" />
         <item>
             <title>Introducing Ribbon, a new programming language!</title>
@@ -20,6 +20,13 @@
             <description>I show how Ribbon handles errors at compile time and runtime.</description>
             <pubDate>Fri, 21 Feb 2025 23:30:00 -0800</pubDate>
             <guid>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</guid>
+        </item>
+        <item>
+            <title>Unified tuples and structs in Ribbon: A brainstorming journey</title>
+            <link>https://nothingtoit.net/posts/ribbon-unified-tuples-structs/</link>
+            <description>I walk through my brainstorming that lead to the unification of tuples and structs in Ribbon.</description>
+            <pubDate>Fri, 28 Feb 2025 22:30:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-unified-tuples-structs/</guid>
         </item>
     </channel>
 </rss>
