@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Compiled vs. interpreted | Nothing to it</title>
+        <title>Unified tuples and structs | Nothing to it</title>
         <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
         <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,10 +36,11 @@
                     associated value. Refactoring these tuples into structs required changing parentheses into curly
                     braces, and I've always found this to be a little annoying.</p>
                 <p>In an early version of Ribbon, I was brainstorming tuples and structs. I thought about how if structs
-                    used parentheses, this refactoring would be a lot smoother. I also thought about how a struct literal
-                    instantiation would look. For reference, Rust's syntax uses curly braces for struct literals, such
-                    as <code>Struct { field1: value1, field2: value2 }</code>. However, these initializer
-                    literals are just like function calls. In fact, the entire parameter tuple of a function is nothing more than a struct!
+                    used parentheses, this refactoring would be a lot smoother. I also thought about how a struct
+                    literal instantiation would look. For reference, Rust's syntax uses curly braces for struct
+                    literals, such as <code>Struct { field1: value1, field2: value2 }</code>. However, these initializer
+                    literals are just like function calls. In fact, the entire parameter tuple of a function is nothing
+                    more than a struct!
                 </p>
                 <p>Separately, I was trying to design destructuring in Ribbon. Pattern matching and unwrapping objects
                     is very handy, and just like Rust and many other languages, Ribbon would fully support it. My first
@@ -95,7 +96,8 @@ f(x: 32, y: &quot;Hello&quot;)
 </code></pre>
                 <p>This declaration creates two new variables, <code>a</code> and <code>b</code>, that are simply
                     renamed from the <code>x</code> and <code>y</code> fields respectively. There's no way to insert
-                    type hints&mdash;they must be listed after, such as <code>(x: a, y: b): (x: Int, y: String)</code>.</p>
+                    type hints&mdash;they must be listed after, such as <code>(x: a, y: b): (x: Int, y: String)</code>.
+                </p>
                 <p>This stumped me for a little while. There's an ambiguity of using <code>:</code> to separate a
                     variable and its type, versus using <code>:</code> to separate a field identifier and its value. Did
                     I need to introduce a new operator? Did I need to resort to restricting types to have capitalized
