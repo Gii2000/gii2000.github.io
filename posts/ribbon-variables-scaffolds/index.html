@@ -139,7 +139,7 @@ print(x) // [(a: 1, b: (c: &quot;Hi&quot;, d: &quot;Hello&quot;))]
                 <p>I'm calling it scaffolding because you can &quot;scaffold&quot; up your struct or list. Any
                     &quot;empty&quot; place that <em>could exist</em> permits element access <em>as if it did
                         exist</em>. Though the semantics of Ribbon only actually allocates storage if assignment is
-                    performed or a mutable reference is created. Otherwise it defaults to a empty value
+                    performed or a mutable reference is created. Otherwise it defaults to an empty value
                     (<code>null</code>) and doesn't allocate any storage at all.</p>
                 <p>In particular, I'm calling a reference to an element that doesn't exist yet a <em>scaffold</em>. For
                     example, the <code>x[0].b.c</code> from above is a scaffold since it denotes a place in memory which
@@ -166,7 +166,7 @@ print(x) // [(a: 1, b: (c: &quot;Hi&quot;, d: &quot;Hello&quot;))]
                     <li>
                         <strong>Assignments</strong>: Assigning to a variable (e.g. <code>b := 123</code>) replaces the
                         value of the <code>RwLock</code>, requiring the inner <code>Arc</code> be unshared (i.e. have a
-                        strong count of 1) by deep cloning it as necessary. This is called <em>copy-on-write</em>. For
+                        strong count of 1) by deep cloning it as necessary. This is called <em>copy on write</em>. For
                         example:
                         <pre><code class="language-ribbon">var a = [1, 2]
 let b = a      // `b` and `a` share the same `RwLock&lt;Value&gt;`
@@ -298,15 +298,12 @@ print(b) // [1, 2]
                 }
             }
 
-            p>code {
+            code {
                 padding: 0 .125rem;
                 border-radius: .25rem;
                 background: #DDD;
 
                 white-space: pre;
-            }
-
-            code {
                 font-family: Hack;
             }
 
