@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Variables and scaffolds | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div class="main">
+            <main>
+                <h1>Variables and scaffolds</h1>
+                <div class="date">March 7, 2025</div>
+
+                <p>Welcome back! Today, I wanted to talk about variables in Ribbon. But first, let's review my
+                    motivation!</p>
+                <h2>The ultimate variable</h2>
+                <p>In Rust, there is an <em>ultimate</em> variable type. It's an
+                    <code>Arc&lt;RwLock&lt;T&gt;&gt;</code>. It has the most utility for any variable type. But what is
+                    it?
+                </p>
+                <p>Broken down:</p>
+                <ul>
+                    <li>
+                        <code>Arc</code> means atomically reference counted. This means that the value can be shared by
+                        references without deep copying, and these references are tracked (counted), thus garbage
+                        collection is unnecessary. Additionally, this sharing can occur across different threads, since
+                        the reference counting is thread-safe (atomic).
+                    </li>
+                    <li>
+                        <code>RwLock</code> is a thread-safe read-write lock. It's a kind of mutex that allows interior
+                        mutability. This means that even when sharing references, we do not violate Rust's strict policy
+                        of unique mutable aliases, since obtaining a mutable reference can only be done (safely) by
+                        using the <code>RwLock</code>.
+                    </li>
+                </ul>
+                <p>But this is also the most expensive variable type. If you don't need sharing across threads, you can
+                    use a thread-unsafe alternative: <code>Rc&lt;RefCell&lt;T&gt;&gt;</code>. If you don't need shared
+                    mutability, you can use <code>Arc&lt;T&gt;</code> (thread-safe) or <code>Rc&lt;T&gt;</code>
+                    (thread-unsafe). If you don't need sharing at all, you can use the traditional <code>T</code> or
+                    <code>Box&lt;T&gt;</code>.
+                </p>
+                <p>This has always bothered me. The implementation you should pick comes simply from your needs.
+                    Theoretically the compiler has all of the knowledge about a variable's usage, and could pick the
+                    ideal implementation for you. If it cannot for whatever reason (e.g. the variable is exported and
+                    therefore has unknown usage), then using the default <code>Arc&lt;RwLock&lt;T&gt;&gt;</code> (if
+                    mutable) or <code>Arc&lt;T&gt;</code> (if immutable) is always the best and safest choice.</p>
+                <p>From a programmer's perspective, it would be very nice if every variable was treated as Rust's
+                    <code>Arc&lt;RwLock&lt;T&gt;&gt;</code> type, and then based on usage, the optimizer could choose a
+                    better implementation.
+                </p>
+                <p>Now, there are some cases where a Rust programmer would tell you that they chose an implementation
+                    because of a hard constraint. That is a valid concern in some cases. But even in this case, Rust's
+                    approach doesn't explicitly state what that constraint <em>was</em>. For example, it's quite easy
+                    for a developer to refactor an <code>Rc</code> into an <code>Arc</code> <em>just to &quot;fix a
+                        bug&quot;</em>, not realizing they defeated the whole point of using an <code>Rc</code> for a
+                    specific reason. I designed Ribbon to explicitly state these constraints.</p>
+                <h2>Ribbon's variable semantics</h2>
+                <p>In Ribbon, you can declare a variable as:</p>
+                <pre><code class="language-ribbon">var x: T   // Corresponds to Rust's `Arc&lt;RwLock&lt;T&gt;&gt;`
+let x: T   // Corresponds to Rust's `Arc&lt;T&gt;`
+</code></pre>
+                <p>If, for whatever performance reason, you do not want atomic reference counting, and hence cannot
+                    share the reference across threads, you would impose a constraint <code>@Local</code>.</p>
+                <pre><code class="language-ribbon">var x: T and @Local   // Corresponds to Rust's `Rc&lt;RefCell&lt;T&gt;&gt;`
+let x: T and @Local   // Corresponds to Rust's `Rc&lt;T&gt;`
+</code></pre>
+                <p>If you want <em>everything</em> within a block to be local, you can just provide the constraint to
+                    the whole block.</p>
+                <pre><code class="language-ribbon">@Local {
+    var x: T   // Corresponds to Rust's `Rc&lt;RefCell&lt;T&gt;&gt;`
+    let x: T   // Corresponds to Rust's `Rc&lt;T&gt;`
+
+    ...
+}
+</code></pre>
+                <p>And if you want something in a <code>@Local</code> block to be thread-safe, you can use
+                    <code>@Global</code> inside. Additionally, if you need a variable to actually be stored by value
+                    (e.g. a plain <code>T</code> in Rust), you can use <code>@Owned</code>. Note that
+                    <code>@Local</code>, <code>@Global</code>, and <code>@Owned</code> constraints may change names in
+                    the future as I better refine their semantics.
+                </p>
+                <p>Also note that the shared reference-counting is only a <em>semantic</em> modeling for how variables
+                    work. Depending on usage or the particular data types involved, the optimizer may change their
+                    implementation to a more efficient one.</p>
+                <h2>Copy on write</h2>
+                <p>Similar to Swift, Ribbon uses copy-on-write semantics.</p>
+                <pre><code class="language-ribbon">var a = big_list
+let b = a        // `b` and `a` both share `big_list`. No copy occurs yet.
+
+a ++= [42]       // `a` is mutated while `b` has the old value. A clone occurs.
+</code></pre>
+                <p>The implementation gets a little complex to fully support this, which I describe later in this post.
+                </p>
+                <h2>Shared references</h2>
+                <p>If you do want to have two variables refer to the same place in memory, you can used shared mutable
+                    references. This looks like:</p>
+                <pre><code>var a = 12
+let &amp;b = &amp;a
+
+a := 13
+print(b) // 13
+</code></pre>
+                <p>You can kind of interpret the second line as &quot;Let the address of <code>b</code> be equal to the
+                    address of <code>a</code>&quot;. It has a very satisfying elegance, don't you think?</p>
+                <h2>Scaffolding</h2>
+                <p>There's an additional mechanism I'm calling scaffolding. The idea is quite simple: what if you could
+                    do element access on a element that doesn't exist yet?</p>
+                <pre><code class="language-ribbon">var x = [1, 2]
+
+x[2] := 3
+
+print(x) // [1, 2, 3]
+</code></pre>
+                <p>You've probably seen this is some languages before, like JavaScript. But scaffolding extends to all
+                    collection types to any arbitrary depth! Check this out!</p>
+                <pre><code class="language-ribbon">var x = []
+
+x[0].a := 1
+x[0].b.c := &quot;Hi&quot;
+x[0].b.d := &quot;Hello&quot;
+
+print(x) // [(a: 1, b: (c: &quot;Hi&quot;, d: &quot;Hello&quot;))]
+</code></pre>
+                <p>I'm calling it scaffolding because you can &quot;scaffold&quot; up your struct or list. Any
+                    &quot;empty&quot; place that <em>could exist</em> permits element access <em>as if it did
+                        exist</em>. Though the semantics of Ribbon only actually allocates storage if assignment is
+                    performed or a mutable reference is created. Otherwise it defaults to a empty value
+                    (<code>null</code>) and doesn't allocate any storage at all.</p>
+                <p>In particular, I'm calling a reference to an element that doesn't exist yet a <em>scaffold</em>. For
+                    example, the <code>x[0].b.c</code> from above is a scaffold since it denotes a place in memory which
+                    doesn't exist yet, but that will be constructed in that line of code.</p>
+                <h3>Internal implementation (advanced)</h3>
+                <p>Because of shared mutable references, the actual internal representation of a variable in the
+                    interpreter I have written in Rust uses an <code>Arc&lt;Arc&lt;RwLock&lt;Value&gt;&gt;&gt;</code>.
+                    The outer <code>Arc</code> is for shared mutable references, the inner <code>Arc</code> is used for
+                    sharing values as part of copy-on-write, and the <code>RwLock</code> allows the interior mutability.
+                </p>
+                <p>Here's how the operations work.</p>
+                <ul>
+                    <li>
+                        <strong>Shared mutable references</strong>: Declaring a shared mutable reference (e.g.
+                        <code>let &amp;b = &amp;a</code>) just clones the outer <code>Arc</code> from <code>a</code>
+                        into <code>b</code>. The inner <code>Arc</code> and the <code>RwLock&lt;Value&gt;</code> are
+                        shared without being copied.
+                    </li>
+                    <li>
+                        <strong>Copies</strong>: Declaring a copy (e.g. <code>let b = a</code>) just clones the outer
+                        and inner <code>Arc</code> from <code>a</code> into <code>b</code>. The
+                        <code>RwLock&lt;Value&gt;</code> is shared without being copied.
+                    </li>
+                    <li>
+                        <strong>Assignments</strong>: Assigning to a variable (e.g. <code>b := 123</code>) replaces the
+                        value of the <code>RwLock</code>, requiring the inner <code>Arc</code> be unshared (i.e. have a
+                        strong count of 1) by deep cloning it as necessary. This is called <em>copy-on-write</em>. For
+                        example:
+                        <pre><code class="language-ribbon">var a = [1, 2]
+let b = a      // `b` and `a` share the same `RwLock&lt;Value&gt;`
+
+a[2].c := 3    // This assignment clones the list, then edits index 2
+
+print(a) // [1, 2, (c: 3)]
+print(b) // [1, 2]
+</code></pre>
+                    </li>
+                </ul>
+                <h2>Summary</h2>
+                <p>Hopefully you can see here that the variables in Ribbon are extremely flexible. They are designed to
+                    make prototyping easy, especially with scaffolds! However, once the optimizer phase is built, the
+                    concrete implementation of a variable can be optimized according to how it is used. It's the best of
+                    both flexibility and performance!</p>
+                <p>I hope you enjoyed this blog entry! Next week I'll finally be discussing enums. Until then, take
+                    care!</p>
+
+            </main>
+        </div>
+        <footer>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
+            <div>&copy; 2025 Gaelan Chen</div>
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            .main {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            gap: 2rem;
+            padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>code {
+                    display: block;
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image: linear-gradient(270deg, transparent, black 1rem);
+                }
+            }
+
+            p>code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+            }
+
+            code {
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>
