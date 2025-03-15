@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Enumerations in Ribbon | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div class="main">
+            <main>
+                <h1>Enumerations in Ribbon</h1>
+                <div class="date">March 14, 2025</div>
+
+                <p>Enums are a classic staple of programing languages. Ever since Algol
+                    I've heard. Enums with associated values are even better. Apparently
+                    introduced by Eiffel.</p>
+                <p>Here's enums in Ribbon:</p>
+                <pre class="ribbon"><code>let E = enum {
+    VariantA(x: Int, y: String)
+    VariantB
+}
+
+let e = E.VariantA(x: 32, y: &quot;Hi&quot;)
+
+match e {
+    .VariantA(x, y) =&gt; print(&quot;VariantA: x=\(x) y=\(y)&quot;)
+    .VariantB() =&gt; print(&quot;VariantB&quot;)
+}</code></pre>
+                <p>And, as usual, some details:</p>
+                <ul>
+                    <li>Enum variants are their own type. For example, a function that takes
+                        only an <code>E.VariantA</code> would have a signature like
+                        <code>(x: E.VariantA) -&gt; ()</code>. Calling it with a
+                        <code>E.VariantB</code> would yield an error. This is similar to failing
+                        an arbitrary constraint, where the function call as a whole would return
+                        an error value. It would be implemented as a runtime check in the
+                        general case, but this can be optimized during static analysis if the
+                        argument is known to always be a <code>E.VariantA</code>.
+                    </li>
+                    <li>Enum variant literals don't need to explicitly state which enum they
+                        belong to. A variant without an enum name can be constructed and
+                        implicitly converted, such as in:
+                        <code>let e: E = .VariantA(x: 32, y: "Hi")</code>.
+                    </li>
+                    <li>In fact, the enum name being optional has some interesting
+                        implications. From the sample above, we can delete all mentions of
+                        <code>E</code>, including the entire enum declaration. This is not a
+                        good practice, but it certainly does make prototyping fast. Here's what
+                        it would look like:
+                        <pre class="ribbon"><code>let e = .VariantA(x: 32, y: &quot;Hi&quot;)
+
+match e {
+    .VariantA(x, y) =&gt; print(&quot;VariantA: x=\(x) y=\(y)&quot;)
+    .VariantB() =&gt; print(&quot;VariantB&quot;)
+}</code></pre>
+                    </li>
+                </ul>
+                <p>But that's not all! I've implemented joining for enums!</p>
+                <pre><code>let OkResult = enum {
+    ResultPage(result: Result, nextPage: () -&gt; OkResult)
+    End
+}
+
+let ErrorResult = enum {
+    NoInternet
+    RateLimitExceeded
+    InvalidCredentials
+}
+
+let Result = OkResult | ErrorResult</code></pre>
+                <p>I haven't started implementing a standard library yet, but I imagine
+                    this will be a useful mechanism for encapsulating possible error types
+                    for a lot of IO methods.</p>
+                <p>Just to be clear, this does tolerate name collisions. For
+                    example:</p>
+                <pre><code>let E1 = enum { A, B }
+let E2 = enum { A, C }
+
+let E = E1 | E2
+
+E.B // Equivalent to E1.B
+E.A // Not allowed, must be disambiguated as `E1.A` or `E2.A`</code></pre>
+                <h2>Associated values as
+                    structs (or tuples)</h2>
+                <p>Enum variants with associated values are nothing more than structs.
+                    In last week's post, I described how to instantiate struct literals, but
+                    I didn't describe how to declare their types. That wasn't intentional,
+                    but I can remedy that for you now.</p>
+                <p>Here's 4 enum variants that are roughly equivalent:</p>
+                <pre class="ribbon"><code>enum {
+    VariantA(x: Int, y: String) // Struct with type hints
+    VariantB(x:, y:)            // Struct without type hints
+    VariantC(:Int, :String)     // Tuple with type hints
+    VariantD(:, :)              // Tuple without type hints
+}</code></pre>
+                <p>I know you must be wondering what happens without colons. I kind of
+                    struggled with this, since there are common uses of declaring a tuple
+                    with type hints, e.g. <code>(Int, String)</code> (like how Rust does
+                    it), and declaring a struct without type hints, e.g.
+                    <code>(x, y)</code>. Many languages would disambiguate by having structs
+                    use <code>{x, y}</code>. But I'm not faltering, yet! I'm going with the
+                    safe approach of making it an error to not include colons. But we'll see
+                    if I have to change that.
+                </p>
+                <h2>What about enums values?</h2>
+                <p>Yes, yes. Enums traditionally just have one value per variant. In
+                    fact, that's entirely how I've implemented them!</p>
+                <pre class="ribbon"><code>enum {
+    VariantA(x: Int, y: String)
+    VariantA = (x: Int, y: String) // same as above
+
+    VariantB = 123
+
+    VariantC       // Has a globally unique and undescribed value
+}</code></pre>
+                <p>Yes, that's right, the struct declaration
+                    <code>(x: Int, y: String)</code> is the variant's value! I'll have to
+                    make another post describing how I treat types as values, including
+                    struct/tuple types.
+                </p>
+                <p>Now, it's probably not a good idea for some variants to be types
+                    while others are values. This can be fixed by putting a constraint on
+                    the values of the enum.</p>
+                <pre class="ribbon"><code>enum : Int {
+    VariantA = 1
+    VariantB = 2
+    VariantC     // Not allowed! Enum variants do not get implicit integer values!
+}</code></pre>
+                <p>Also, you may have noticed that unlike most languages, Ribbon enums
+                    are usually not named. Well, you can name them yourself, using a
+                    variable, as in <code>let E = enum {...}</code>. This is another aspect
+                    of types being values. However, I believe I can compromise and also
+                    allow enum names to be specified in the enum expression, like other
+                    languages.</p>
+                <pre><code>enum E { ... }
+
+// identical to
+
+let E = enum { ... }</code></pre>
+                <p>Now, don't get any funny ideas! Just because enum types are not named
+                    doesn't mean they can be confused for each other. Each
+                    <code>enum {...}</code> creation can be thought of as having a globally
+                    unique (and undescribed) discriminant, which means they never
+                    collide.
+                </p>
+                <pre><code>let E = enum {
+    VariantA
+}
+
+let e = {
+    // New scope! This shadows the previous enum E
+    let E = enum {
+        VariantA
+    }
+
+    E.VariantA // The return value of this block, which stores into `e`
+}
+
+print(e == E.VariantA) // Prints false!</code></pre>
+                <p>Also, a bonus. Since enum blocks can just be declared on the fly, you
+                    can do cool things for prototyping! For example...</p>
+                <pre><code>let some_function(...) -&gt; enum {
+    StatusA
+    StatusB
+} = {
+    ...
+
+    .StatusB // This is the return value again
+}</code></pre>
+                <p>Pretty nice, huh! This is a feature I wanted in other languages for
+                    so long, and now it's finally here!</p>
+                <h2>Conclusion</h2>
+                <p>So, that's Ribbon's enums! I hope you found this fascinating! I'm
+                    still not sure what topic I'll present to you next week, but you can
+                    definitely expect another post. I might discuss types as values and how
+                    it fits into templates, or maybe I'll share some interesting
+                    implementation details of my interpreter written in Rust. Regardless, until
+                    then, take care!</p>
+            </main>
+        </div>
+        <footer>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
+            <div>&copy; 2025 Gaelan Chen</div>
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            .main {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            gap: 2rem;
+            padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>code {
+                    display: block;
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image: linear-gradient(270deg, transparent, black 1rem);
+                }
+            }
+
+            code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>

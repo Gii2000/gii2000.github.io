@@ -4,8 +4,8 @@
         <link>https://nothingtoit.net</link>
         <description>Posts from Nothing to it</description>
         <language>en</language>
-        <pubDate>Fri, 7 Mar 2025 23:30:00 -0800</pubDate>
-        <lastBuildDate>Fri, 7 Mar 2025 23:30:00 -0800</lastBuildDate>
+        <pubDate>Fri, 14 Mar 2025 23:30:00 -0800</pubDate>
+        <lastBuildDate>Fri, 14 Mar 2025 23:30:00 -0800</lastBuildDate>
         <atom:link href="https://nothingtoit.net/rss.xml" rel="self" type="application/rss+xml" />
         <item>
             <title>Introducing Ribbon, a new programming language!</title>
@@ -34,6 +34,13 @@
             <description>I showcase Ribbon's variables and a new mechanism I call scaffolding.</description>
             <pubDate>Fri, 7 Mar 2025 23:30:00 -0800</pubDate>
             <guid>https://nothingtoit.net/posts/ribbon-variables-scaffolds/</guid>
+        </item>
+        <item>
+            <title>Enumerations in Ribbon</title>
+            <link>https://nothingtoit.net/posts/ribbon-enums/</link>
+            <description>I demonstrate Ribbon's enumerations.</description>
+            <pubDate>Fri, 14 Mar 2025 23:30:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-enums/</guid>
         </item>
     </channel>
 </rss>
