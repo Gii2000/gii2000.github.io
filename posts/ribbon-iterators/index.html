@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Iterators in Ribbon | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div class="main">
+            <main>
+                <h1>Iterators in Ribbon</h1>
+                <div class="date">March 21, 2025</div>
+
+                <p>Ribbon currently supports iterators, and I plan on supporting generators soon, though I haven't fully
+                    planned out what the semantics for generators will be yet.</p>
+                <h2>Making an iterator</h2>
+                <p>There's two easy ways to make an iterator. The first is to simply create a list:</p>
+                <pre><code class="language-ribbon">let my_iter = [3, 6, 9]
+</code></pre>
+                <p>The second way is to use some interesting syntax I came up with for iterators:</p>
+                <pre><code class="language-ribbon">let my_iter[i: [0, 1, 2]] = 3 * (i + 1)
+</code></pre>
+                <p>Once again, I can decipher this for you.
+                    0. Yes, I came up with this idea from inspiration by my function declaration syntax (e.g.
+                    <code>let f(x) = ...</code>). I tried identifying the logical analog for the index operator
+                    <code>[]</code> in a declaration, and I arrived at this. Interesting, isn't it?
+                </p>
+                <ol>
+                    <li>The index <code>i</code> has the type of <code>[1, 2, 3]</code>. In Ribbon, types are nothing
+                        more than some kind of expression which denotes what values are legal members or not. Types can
+                        be expressed as type literals, as arbitrary functions that return a Boolean (i.e.
+                        <code>_ &lt; 3</code>, which for reference evaluates to the lambda
+                        <code>x =&gt; x &lt; 3</code>), and they can even be expressed as a list of valid members.
+                        However, you can imagine that there are caveats to what I can accept here. I'm currently only
+                        allowing a type value which defines a countable enumeration for itself, which includes lists
+                        (like above) or types like <code>Nat</code>.
+                    </li>
+                    <li>Only integer-based indices are currently allowed, but I'm considering allowing arbitrary values
+                        which will create a dictionary instead. Technically this means lists are a subset of
+                        dictionaries.</li>
+                    <li>Currently, this is implemented using lazy evaluation, similar to a function definition, which
+                        makes it a proper traditional iterator.</li>
+                    <li>As a bonus, this makes for easy infinite iterators, such as <code>let my_iter[i: Nat] = i</code>
+                    </li>
+                </ol>
+                <h2>Iterating over an iterator</h2>
+                <p>Typically, this is when you'd use a for loop. So, perhaps you'd be surprised to hear that I have not
+                    implemented for loops yet! I will... eventually... probably. In the mean time, I've been using a map
+                    operator, one that I'm quite proud of.</p>
+                <p>So, as far as operators go, the <em>map</em> or <em>apply</em> operator is pretty modern, and hence
+                    late to the game. Most programming languages don't have dedicated operators for it, instead using
+                    methods like <code>.map()</code>. I always thought it was a little clunky, but I also didn't want to
+                    introduce a new operator token.</p>
+                <p>However, I had an interesting idea. Conceptually, I want Ribbon to support calling functions
+                    <code>f(x, y)</code> using syntax like <code>x.f(y)</code>, like the D language. This is quite handy
+                    for a lot of cases. In fact, quite a few languages support this, but they use something called the
+                    <em>pipe operator</em>, typically with the token <code>|&gt;</code>. So instead of
+                    <code>x.f(y)</code>, they'd write <code>x |&gt; f(y)</code>.
+                </p>
+                <p>I don't think it's a surprise that I find the dot notation is quite a bit more elegant, if not for
+                    any reason more than it avoids introducing a new operator. I thought how the map operation is quite
+                    similar to the pipe operation, with the only difference being how the map operator applies to lists.
+                    But Ribbon already distinguishes list types from non-list types! I could reuse the dot operator!</p>
+                <p>Hear me out! So, if <code>x.f(y)</code> calls a function <code>f</code> with <code>x</code> as the
+                    first parameter, then <code>x.f</code> should logically be equivalent to the lambda
+                    <code>y =&gt; f(x, y)</code>. Additionally, because of Ribbon's list semantics, if <code>x</code> is
+                    a list, then <code>x.f(y)</code> and <code>f(x, y)</code> return a list of the results for each
+                    element of <code>x</code>. So, it could be argued that this <code>.f</code> is already
+                    <em>mapping</em> the list <code>x</code> to a new list of outputs. In which case, all we'd need to
+                    do is replace the <code>f</code> in <code>.f</code> with whatever function you wanted to use to map.
+                    And you can just insert parenthesis for that!
+                </p>
+                <pre><code class="language-ribbon">[1, 2, 3].(_ &gt; 1) // equals [false, true, true]
+</code></pre>
+                <p>It's so clean! No new operators, no ambiguities, and it can be chained easily! And supports syntax
+                    like for loops!</p>
+                <pre><code class="language-ribbon">[1, 2, 3].(i =&gt;
+    let x = 3 * i
+    print(x)
+)
+</code></pre>
+                <p>I don't think I've mentioned this yet, but Ribbon considers white space when parsing, to a higher
+                    (and hopefully smarter) degree than Python does. I tried really hard designing it to not be
+                    annoying. In the case above, this is equivalent to
+                    <code>[1, 2, 3].(i =&gt; { let x = 3 * i; print(x) })</code>.
+                </p>
+                <p>Note that this also means we can use this as a pipe operator, such as <code>3.(_ + 4)</code> (equals
+                    7).</p>
+                <p>Also note that when given a lazy iterator, the map output is also a lazy evaluator.</p>
+                <h2>Imperative access</h2>
+                <p>Of course, to support systems programming and other low-level applications, I will also provide
+                    imperative access to iterators. Here's what I currently have planned:</p>
+                <pre><code class="language-ribbon">var my_iter = [1, 2, 3]
+
+let a = &amp;my_iter.next() // a = 1, my_iter = [2, 3]
+
+let c = &amp;my_iter.skip().next() // c = 3, my_iter = []
+
+let d = &amp;my_iter.next() // d = Error (precondition failed), my_iter = []
+</code></pre>
+                <p>Conceptually, iterators are treated as if they are just lists. It's just that some lists can be
+                    lazily generated... We'll see if I run into problems with this conceptualization later as I
+                    implement this. I'll report on my findings later.</p>
+                <h2>Conclusion</h2>
+                <p>I hope this gives you inspiration! I always thought that supporting iterators is a core component of
+                    flexible software. There's nothing more satisfying than the idea: "If I can do it once, I can do
+                    it a million times." It has never been easier!</p>
+                <p>For next week's blog, I might try something new and discuss something other than Ribbon. I've had a
+                    few ideas, but I'm not sure which one I'll pick to write a thousand words for. Regardless, I hope to
+                    see you next week! Take care!</p>
+            </main>
+        </div>
+        <footer>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
+            <div>&copy; 2025 Gaelan Chen</div>
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            .main {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            gap: 2rem;
+            padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>code {
+                    display: block;
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image:
+                        linear-gradient(0deg, black, black 1rem, transparent 1rem),
+                        linear-gradient(90deg, transparent, black 1rem, black calc(100% - 1rem), transparent);
+                }
+            }
+
+            code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>
