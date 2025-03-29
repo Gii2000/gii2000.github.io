@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Multithreading in Ribbon | Nothing to it</title>
+        <link rel="alternate" type="application/rss+xml" href="https://nothingtoit.net/rss.xml">
+        <link rel='stylesheet' href='//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/png" href="/meta/favicon-96.png" sizes="96x96">
+        <link rel="icon" type="image/svg+xml" href="/meta/favicon.svg">
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="/meta/favicon-180.png">
+        <meta name="apple-mobile-web-app-title" content="Nothing to it">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="canonical" href="https://nothingtoit.net">
+    </head>
+    <body>
+        <header>
+            <h1>
+                <a href="/">
+                    Nothing to it
+                </a>
+            </h1>
+        </header>
+        <div class="main">
+            <main>
+                <h1>Multithreading in Ribbon</h1>
+                <div class="date">March 28, 2025</div>
+
+                <p>Hello! I must preface this post by saying that a lot of ideas I'm sharing here are still experimental
+                    and haven't even been implemented in my interpreter yet. I suppose I've been blogging faster than I
+                    am developing. But, regardless, let me show you my plans!</p>
+                <h2>Motivation</h2>
+                <p>As is tradition, let us start with a motivating example. Suppose we are to download a list of files
+                    from the internet. Here's what the code might look like:</p>
+                <pre><code>let endpoints_to_download = [ ... ] // Suppose this has 100 items
+
+for endpoint in endpoints_to_download {
+    let data = std.net.download(&quot;http://example.com/\(endpoint)&quot;)
+
+    std.fs.write(&quot;./\(endpint).txt&quot;, data)
+
+    print(&quot;Finished downloading '\(endpoint)'&quot;)
+}
+</code></pre>
+                <p>Now, in most programming languages today, this code is sequential. Each iteration downloads a file,
+                    saves it to disk, and then prints that it completed, before continuing to the next iteration. This
+                    is a very safe interpretation.</p>
+                <p>There's theoretical optimizations to be made, such as performing downloads and disk writes in
+                    parallel. Even the print statement can be parallelized. But you run the risk of the behavior of the
+                    program not matching the user's expectation. For instance, they might fully anticipate that the
+                    print statements are executed in the same order as the list <code>endpoints_to_download</code>. Or
+                    the server they are downloading from might be rate-limited, and so few downloads can be executed
+                    simultaneously.</p>
+                <p>There's many complications that could make naive optimizations result in <em>incorrect</em> behavior,
+                    or at least behavior that the programmer finds <em>unexpected</em> and <em>unwanted</em>.</p>
+                <p>That being said, it's still clear there's some easy optimizations that could be done. Even if we're
+                    only allowed one download, one disk write, and one print statement to ever run simultaneously, we
+                    can still have a pipelined implementation that actually does run them in parallel while matching the
+                    behavior of a sequential implementation.</p>
+                <p>My plan is for Ribbon's interpreter to support that optimization natively. This is a big can of
+                    worms, so I'll try to keep it brief and pedagological.</p>
+                <h2>Instruction reordering</h2>
+                <p>I'm sure many of you know that modern CPUs can do instruction reordering. If an instruction is
+                    waiting to read memory, the CPU can look ahead for other instructions that it can execute,
+                    instructions that don't depend on the result of the memory read. Of course, the CPU can never commit
+                    the results of these future instructions. For example, if the memory read yields a segmentation
+                    fault, the CPU should have raised an exception at that instruction, and all future instructions
+                    should have never been executed.</p>
+                <p>Well, I want Ribbon's interpreter to have a similar feature. But since I get to design the abstract
+                    machine for the Ribbon language, I get to figure out the semantics that supports such a feature
+                    while being as simple as possible. And I think I have it.</p>
+                <h2>Ribbon evaluation semantics</h2>
+                <p>In Ribbon, <strong>every expression is evaluated asynchronously</strong>. It's as if every single
+                    line of code was asynchronous, and returned a <code>Future</code> or <code>Promise</code>. It's
+                    worth noting that <em>asynchronous</em> is really just a synonym for <em>reorderable</em>. For
+                    example:</p>
+                <pre><code class="language-ribbon">let a = a_long_computation()
+let b = another_long_computation()
+</code></pre>
+                <p>In the code above, assuming both functions are pure and have no side effects, Ribbon gives no
+                    guarantees about which computation executes first. It's as if you could reorder both lines.</p>
+                <p>The only instructions which are not reorderable are instructions that are not <em>pure</em>, which is
+                    basically instructions which read from external inputs or write to external outputs (hence forth
+                    called external I/O).</p>
+                <p>Except, here's where we can improve the semantics to make the aforementioned optimization possible.
+                    What if we could describe what instructions are reorderable?</p>
+                <p>Hear me out. Typically we expect <code>print</code> statements to execute sequentially. But what if
+                    we could allow such statements to run in any order?</p>
+                <pre><code class="language-ribbon">@Async(print) {
+    print(&quot;A&quot;)
+    print(&quot;B&quot;)
+    print(&quot;C&quot;)
+}
+</code></pre>
+                <p>This block of code does not make any guarantees about the execution order of the print statements.
+                    For instance, <code>B C A</code> is a legal behavior. And so is <code>A B C</code>, which is likely
+                    what an optimizer would choose. But here's where this could be clever.</p>
+                <pre><code class="language-ribbon">@Async(print) {
+    for task in tasks {
+        task.execute()
+        print(&quot;Completed task \(task.name)&quot;)
+    }
+}
+</code></pre>
+                <p>If we assume that <code>Task.execute</code> is a pure function and can already be reordered, then
+                    this code is semantically equivalent to spawning a bunch of threads and having them all execute in
+                    parallel.</p>
+                <p>We could go one step further, and specify this <code>Async</code>-ness in the function declaration!
+                    I'm thinking something like:</p>
+                <pre><code>let download(url: HTTP.URL) -&gt; Binary: @Async = {
+    ...
+}
+</code></pre>
+                <p>To explain, <code>download</code> is a lambda which has two constraints: the lambda type is
+                    <code>(url: HTTP.URL) -&gt; Binary</code> and the lambda satisfies <code>@Async</code>, meaning that
+                    calls to this lambda can be reordered with other calls to this lambda, even if this lambda
+                    interfaces with external I/O. If I wanted to omit types, could also write this as
+                    <code>let download(url): @Async = ...</code>.</p>
+                <p>This would be nice, wouldn't it? You'd get easy and correct parallelism within your sequential code,
+                    simply because the interpreter understands what it is allowed to run asynchronously and not.</p>
+                <h2>Closing remarks</h2>
+                <p>There's a lot left for me to explore here, so unfortunately this is where I'll have to stop for
+                    today's post. I still have to experiment with implementations to really figure out how feasible this
+                    is. And I haven't actually been able to focus on my interpreter lately due to a new side project of
+                    mine...</p>
+                <p>I'm making a website builder! It's still very barebones, but I'm trying to turn it into a commercial
+                    product within the next month. I might blog about it, or I might not. It's certainly not as
+                    interesting as a programming language, but there are some interesting problems I solved while
+                    building it so far.</p>
+                <p>Anyways, it pains me to say it, but I think I'm going to cut down on my blog posts from weekly to
+                    monthly. Since today is the last Friday of the month, I think it's reasonable to say my new posting
+                    schedule will be the last Friday of the month. Once I finish up the website builder, I'll be able to
+                    resume spending a lot of time working on Ribbon, and we'll see if I can pick up the blogging pace
+                    back to weekly.</p>
+                <p>Regardless, it means a lot to me that you're reading this. I hope you enjoy these blogs as much as I
+                    do. I look forward to seeing you again for next month's post! Until then, take extra good care!</p>
+            </main>
+        </div>
+        <footer>
+            <a href="/rss.xml">
+                <svg width="1rem" viewBox="0 0 16 16" fill="#f26522" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 2 2 V 14 H 14 V 2 Z" fill="white"></path>
+                    <path
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm1.5 2.5c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1 0-2zm0 4a6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1 0-2zm.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+                </svg>
+            </a>
+            <a href="mailto:contact@nothingtoit.net">
+                <svg height="1rem" viewBox="0 4 24 16" fill="none" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 7L10.94 11.3375C11.5885 11.7428 12.4115 11.7428 13.06 11.3375L20 7M5 18H19C20.1046 18 21 17.1046 21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18Z"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                contact@nothingtoit.net
+            </a>
+            <div>&copy; 2025 Gaelan Chen</div>
+        </footer>
+    </body>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: inherit;
+            color: inherit;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        body {
+            display: flex;
+            margin: 0 auto;
+            min-height: 100vh;
+
+            flex-direction: column;
+
+            font-family: sans-serif;
+            color: #222;
+            background: #222;
+
+            .main {
+                background: #EEE;
+                flex: 1;
+            }
+        }
+
+        header,
+        footer {
+            color: #EEE;
+            background: #222;
+
+            h1 {
+                padding: 1rem;
+
+                max-width: 52rem;
+                margin: 0 auto;
+            }
+        }
+
+        footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            gap: 2rem;
+            padding: 1rem;
+
+            a {
+                display: flex;
+                gap: .5ch;
+                align-items: center;
+            }
+        }
+
+        main {
+            padding: 0 1rem 1rem 1rem;
+
+            min-width: 16rem;
+            max-width: 52rem;
+            margin: 0 auto;
+
+            line-height: 1.4;
+
+            .date {
+                text-align: end;
+                color: #AAA;
+            }
+
+            pre {
+                border-radius: .5rem;
+                background: #DDD;
+
+                &>code {
+                    display: block;
+                    padding: 1rem;
+
+                    white-space: pre;
+                    overflow-x: auto;
+
+                    mask-image:
+                        linear-gradient(0deg, black, black 1rem, transparent 1rem),
+                        linear-gradient(90deg, transparent, black 1rem, black calc(100% - 1rem), transparent);
+                }
+            }
+
+            code {
+                padding: 0 .125rem;
+                border-radius: .25rem;
+                background: #DDD;
+
+                white-space: pre;
+                font-family: Hack;
+            }
+
+            ol,
+            ul {
+                padding: 0 0 0 2rem;
+            }
+
+            li,
+            p,
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6,
+            pre {
+                margin-top: .5lh;
+            }
+        }
+    </style>
+</html>

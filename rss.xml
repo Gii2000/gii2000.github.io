@@ -4,8 +4,8 @@
         <link>https://nothingtoit.net</link>
         <description>Posts from Nothing to it</description>
         <language>en</language>
-        <pubDate>Fri, 21 Mar 2025 23:30:00 -0700</pubDate>
-        <lastBuildDate>Fri, 21 Mar 2025 23:30:00 -0700</lastBuildDate>
+        <pubDate>Fri, 28 Mar 2025 23:30:00 -0700</pubDate>
+        <lastBuildDate>Fri, 28 Mar 2025 23:30:00 -0700</lastBuildDate>
         <atom:link href="https://nothingtoit.net/rss.xml" rel="self" type="application/rss+xml" />
         <item>
             <title>Introducing Ribbon, a new programming language!</title>
@@ -48,6 +48,13 @@
             <description>I demonstrate Ribbon's iterators.</description>
             <pubDate>Fri, 21 Mar 2025 23:30:00 -0700</pubDate>
             <guid>https://nothingtoit.net/posts/ribbon-iterators/</guid>
+        </item>
+        <item>
+            <title>Multithreading in Ribbon</title>
+            <link>https://nothingtoit.net/posts/ribbon-multithreading/</link>
+            <description>I demonstrate my plans for multithreading in Ribbon, and I announce a monthly schedule.</description>
+            <pubDate>Fri, 28 Mar 2025 23:30:00 -0700</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-multithreading/</guid>
         </item>
     </channel>
 </rss>
