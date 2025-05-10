@@ -37,16 +37,17 @@
                 <p>However, there is still a very clear distinction between a language &quot;feeling&quot; like it's
                     compiled or interpreted. The way I see it:</p>
                 <ul>
-                    <li>Compiled languages catch type and semantic errors at compile time, preventing execution until
-                        they are resolved.</li>
+                    <li>Compiled languages catch type and some semantic errors at compile time, preventing execution
+                        until they are resolved. Other semantic errors are deferred to runtime checks.</li>
                     <li>Interpreted languages defer most if not all checks to runtime, meaning the program may execute
                         partially before encountering an issue which stops the program.</li>
                 </ul>
                 <p>Then you're probably wondering: When does Ribbon check errors? Interestingly, I've designed it to
-                    catch errors both at compile time and at runtime. I really mean it. A compile-time error is also
-                    shown at runtime, and similarly a runtime error is shown at compile-time (pending some formal
-                    verification). Even beyond that, runtime errors do not terminate the program if they don't have to.
-                    Here's an example using actual outputs from my current interpreter:</p>
+                    catch errors both at compile time and at runtime. I really mean it. A compile-time error is a
+                    runtime error that has been caught by static analysis, and similarly a runtime error is (ideally) a
+                    compile-time error that has not been handled until runtime. Additionally, errors do not terminate
+                    the program if they don't have to. Here's an example using actual outputs from my current
+                    interpreter:</p>
                 <pre><code>let x = 34
 
 let y = x + z

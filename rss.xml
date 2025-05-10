@@ -1,46 +1,20 @@
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"
+    xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
         <title>Nothing to it</title>
         <link>https://nothingtoit.net</link>
         <description>Posts from Nothing to it</description>
         <language>en</language>
-        <pubDate>Fri, 28 Mar 2025 23:30:00 -0700</pubDate>
-        <lastBuildDate>Fri, 28 Mar 2025 23:30:00 -0700</lastBuildDate>
+        <pubDate>Fri, 14 Feb 2025 23:00:00 -0800</pubDate>
+        <lastBuildDate>Sat, 10 May 2025 11:00:00 -0700</lastBuildDate>
         <atom:link href="https://nothingtoit.net/rss.xml" rel="self" type="application/rss+xml" />
         <item>
-            <title>Introducing Ribbon, a new programming language!</title>
-            <link>https://nothingtoit.net/posts/introducing-ribbon/</link>
-            <description>Ribbon, a new programming language! Still in alpha! I provide 3 code samples to demonstrate my plans for it.</description>
-            <pubDate>Fri, 14 Feb 2025 23:00:00 -0800</pubDate>
-            <guid>https://nothingtoit.net/posts/introducing-ribbon/</guid>
-        </item>
-        <item>
-            <title>Compiled vs. interpreted languages</title>
-            <link>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</link>
-            <description>I show how Ribbon handles errors at compile time and runtime.</description>
-            <pubDate>Fri, 21 Feb 2025 23:30:00 -0800</pubDate>
-            <guid>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</guid>
-        </item>
-        <item>
-            <title>Unified tuples and structs in Ribbon: A brainstorming journey</title>
-            <link>https://nothingtoit.net/posts/ribbon-unified-tuples-structs/</link>
-            <description>I walk through my brainstorming that lead to the unification of tuples and structs in Ribbon.</description>
-            <pubDate>Fri, 28 Feb 2025 22:30:00 -0800</pubDate>
-            <guid>https://nothingtoit.net/posts/ribbon-unified-tuples-structs/</guid>
-        </item>
-        <item>
-            <title>Variables and scaffolds</title>
-            <link>https://nothingtoit.net/posts/ribbon-variables-scaffolds/</link>
-            <description>I showcase Ribbon's variables and a new mechanism I call scaffolding.</description>
-            <pubDate>Fri, 7 Mar 2025 23:30:00 -0800</pubDate>
-            <guid>https://nothingtoit.net/posts/ribbon-variables-scaffolds/</guid>
-        </item>
-        <item>
-            <title>Enumerations in Ribbon</title>
-            <link>https://nothingtoit.net/posts/ribbon-enums/</link>
-            <description>I demonstrate Ribbon's enumerations.</description>
-            <pubDate>Fri, 14 Mar 2025 23:30:00 -0700</pubDate>
-            <guid>https://nothingtoit.net/posts/ribbon-enums/</guid>
+            <title>Multithreading in Ribbon</title>
+            <link>https://nothingtoit.net/posts/ribbon-multithreading/</link>
+            <description>I demonstrate my plans for multithreading in Ribbon, and I announce a
+                monthly schedule.</description>
+            <pubDate>Fri, 28 Mar 2025 23:30:00 -0700</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-multithreading/</guid>
         </item>
         <item>
             <title>Iterators in Ribbon</title>
@@ -50,11 +24,42 @@
             <guid>https://nothingtoit.net/posts/ribbon-iterators/</guid>
         </item>
         <item>
-            <title>Multithreading in Ribbon</title>
-            <link>https://nothingtoit.net/posts/ribbon-multithreading/</link>
-            <description>I demonstrate my plans for multithreading in Ribbon, and I announce a monthly schedule.</description>
-            <pubDate>Fri, 28 Mar 2025 23:30:00 -0700</pubDate>
-            <guid>https://nothingtoit.net/posts/ribbon-multithreading/</guid>
+            <title>Enumerations in Ribbon</title>
+            <link>https://nothingtoit.net/posts/ribbon-enums/</link>
+            <description>I demonstrate Ribbon's enumerations.</description>
+            <pubDate>Fri, 14 Mar 2025 23:30:00 -0700</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-enums/</guid>
+        </item>
+        <item>
+            <title>Variables and scaffolds</title>
+            <link>https://nothingtoit.net/posts/ribbon-variables-scaffolds/</link>
+            <description>I showcase Ribbon's variables and a new mechanism I call scaffolding.</description>
+            <pubDate>Fri, 7 Mar 2025 23:30:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-variables-scaffolds/</guid>
+        </item>
+        <item>
+            <title>Unified tuples and structs in Ribbon: A brainstorming journey</title>
+            <link>https://nothingtoit.net/posts/ribbon-unified-tuples-structs/</link>
+            <description>I walk through my brainstorming that lead to the unification of tuples and
+                structs in Ribbon.</description>
+            <pubDate>Fri, 28 Feb 2025 22:30:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/ribbon-unified-tuples-structs/</guid>
+        </item>
+        <item>
+            <title>Compiled vs. interpreted languages</title>
+            <link>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</link>
+            <description>I show how Ribbon handles errors at compile time and runtime.</description>
+            <pubDate>Fri, 21 Feb 2025 23:30:00 -0800</pubDate>
+            <dc:date>2025-05-10T18:00:00Z</dc:date>
+            <guid>https://nothingtoit.net/posts/ribbon-compiled-and-interpreted/</guid>
+        </item>
+        <item>
+            <title>Introducing Ribbon, a new programming language!</title>
+            <link>https://nothingtoit.net/posts/introducing-ribbon/</link>
+            <description>Ribbon, a new programming language! Still in alpha! I provide 3 code
+                samples to demonstrate my plans for it.</description>
+            <pubDate>Fri, 14 Feb 2025 23:00:00 -0800</pubDate>
+            <guid>https://nothingtoit.net/posts/introducing-ribbon/</guid>
         </item>
     </channel>
 </rss>
